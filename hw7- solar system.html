@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<head>
+<title>Phases of the Moon</title>
+<script src="three.min.js"></script>
+<script src="KeyboardState.js"></script>
+
+<script>
+// Muriel Brunet
+// Solar System Hw 7
+// 11/17/16
+// Up & Down Arrows: rotate the x-axis
+// Left & Right Arrows: rotate the z-axis
+// A & D Keys: move along the y-axis
+// W & S Keys: move along the z-axis
+
+    var scene, camera, renderer;  // Three.js rendering basics.
+
+    var canvas;  // The canvas on which the image is rendered.
+
+    var dirLight; // Our directional light is global so we can change its position.
+
+    var keyboard = new KeyboardState();
+
+    var earthAndMoon;
+    var moon;
+
+    // Create the scene. This function is called once, as soon as the page loads.
+    // The renderer has already been created before this function is called.
+    function createWorld() {
+        
+        renderer.setClearColor(0); // Set background color (0, or 0x000000, is black).
+        scene = new THREE.Scene(); // Create a new scene which we can add objects to.
+    
+        // create a camera, sitting on the positive z-axis.  The camera is not part of the scene.
+        camera = new THREE.PerspectiveCamera(45, canvas.width/canvas.height, 0.1, 4000); //fov, aspect, near, far
+        camera.position.z = 300; // pull back the camera
+        camera.rotation.x = -0.3;
+        camera.position.y = 75;
+
+
+
+        ambientLight = new THREE.AmbientLight("red", 0.2);
+        scene.add(ambientLight);
+
+        //sunlight
+        pointLight = new THREE.PointLight("white", 20, 145); // color, intensity, and distance
+        pointLight.position.set( 0, 0, 0 );
+        scene.add(pointLight);
+        scene.add(new THREE.PointLightHelper(pointLight, 7)); // see where the light is
+
+        // to light up the solar system
+        dirLight = new THREE.DirectionalLight("white", 1);
+        dirLight.position.set( 100, 100,  100);
+        scene.add(dirLight);
+
+        earthAndMoon = new THREE.Object3D();
+        moon = new THREE.Object3D();
+        scene.add(earthAndMoon);
+        scene.add(moon);
+
+        //SUN
+        var radius = 30,
+            segments = 20,
+            rings = 20;
+        var sunSphereGeometry = new THREE.SphereGeometry(radius, segments, rings);
+        var sunSphereMaterial = new THREE.MeshLambertMaterial({color: "orange", opacity: 1, transparent: false});
+
+        var sunSphere = new THREE.Mesh(sunSphereGeometry, sunSphereMaterial);
+
+        // add the sphere to the scene
+        scene.add(sunSphere); 
+
+
+        //MOON
+        radius = 5,
+        segments = 20,
+        rings = 20;
+        var moonSphereGeometry = new THREE.SphereGeometry(radius, segments, rings);
+        var moonSphereMaterial = new THREE.MeshLambertMaterial({ color: 0x545454});
+        var moonSphere = new THREE.Mesh(moonSphereGeometry, moonSphereMaterial);
+        moonSphere.position.x = 30;
+        moon.position.x = 120;
+        moon.add(moonSphere);
+
+        // EARTH
+        radius = 15,
+        segments = 20,
+        rings = 20;
+        var earthSphereGeometry = new THREE.SphereGeometry(radius, segments, rings);
+        var earthSphereMaterial = new THREE.MeshLambertMaterial({ color: "green" });
+        var earthSphere = new THREE.Mesh(earthSphereGeometry, earthSphereMaterial);
+        earthSphere.position.x = 120;
+
+        earthAndMoon.add(earthSphere);
+        earthAndMoon.add(moon);
+
+
+        // stars
+        for(var i=1; i<=200; i++){
+            var x = getRandomIntInclusive(-300, 300);
+            var y = getRandomIntInclusive(-200, 200);
+            var z = getRandomIntInclusive(-300, 0);
+            scene.add(cube(x, y, z));   
+        }
+
+
+}
+
+    function cube(cx, cy, cz){
+        var squareGeom = new THREE.Geometry();        
+        var cubeGeom = new THREE.BoxGeometry(1,1,1);
+        var cubeMaterial = new THREE.MeshFaceMaterial( [
+            new THREE.MeshPhongMaterial( { color: "white" } ),     // for the +x face
+            new THREE.MeshPhongMaterial( { color: "white" } ),    // for the -x face
+            new THREE.MeshPhongMaterial( { color: "white" } ),   // for the +y face
+            new THREE.MeshPhongMaterial( { color: "white" } ), // for the -y face
+            new THREE.MeshPhongMaterial( { color: "white" } ),    // for the +z face
+            new THREE.MeshPhongMaterial( { color: "white" } )   // for the -z face
+        ] );
+        var cube = new THREE.Mesh( cubeGeom, cubeMaterial );
+        cube.position.x = cx;
+        cube.position.y = cy;
+        cube.position.z = cz;
+        return(cube);
+    }
+
+    // Returns a random integer between min (included) and max (included)
+    // Using Math.round() will give you a non-uniform distribution!
+    function getRandomIntInclusive(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function update() {
+        keyboard.update();
+
+        if ( keyboard.pressed("left") ) {
+            camera.rotation.z -= 0.03;
+        }
+        if ( keyboard.pressed("right") ) {
+            camera.rotation.z += 0.03;
+        }
+        if ( keyboard.pressed("down") ) {
+            camera.rotation.x -= 0.03;
+        }
+        if ( keyboard.pressed("up") ) {
+            camera.rotation.x += 0.03;
+        }
+        if ( keyboard.pressed("W") ) {
+            camera.position.z += 5;
+        }
+        if ( keyboard.pressed("S") ) {
+            camera.position.z -= 10;
+        }
+        if ( keyboard.pressed("D") ) {
+            camera.position.y += 5;
+        }
+        if ( keyboard.pressed("A") ) {
+            camera.position.y -= 10;
+        }
+
+    }
+
+    // Render the scene. This is called for each frame of the animation.
+    function render() {
+        requestAnimationFrame( render );
+
+        earthAndMoon.rotation.y += 0.01;
+        moon.rotation.y += 0.06;
+
+        renderer.render(scene, camera);
+        update();
+    }
+
+    //----------------------------------------------------------------------------------
+
+    // The init() function is called by the onload event when the document has loaded.
+    function init() {
+        try {
+            canvas = document.getElementById("glcanvas");
+            renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true} );
+        }
+        catch (e) {
+            document.getElementById("canvas-holder").innerHTML = "<h3><b>WebGL is not available.</b><h3>";
+            return;
+        }
+    
+        // create world and render scene
+        createWorld();
+        render();
+    }
+
+</script>
+
+</head>
+<body onload="init()">
+<div id="canvas-holder">
+    <canvas id="glcanvas" width="600" height="400"></canvas>
+
+    <p><u>Control Keys</u></p>
+    <p><i>Up & Down Arrows:</i> rotate the x-axis</p>
+    <p><i>Left & Right Arrows:</i> rotate the z-axis</p>
+    <p><i>A & D Keys:</i> move along the y-axis</p>
+    <p><i>W & S Keys:</i> move along the z-axis</p>
+
+
+</div>
+</body>
+</html>
